@@ -1,6 +1,6 @@
 # TubeFit — YouTube Comment Intelligence
 
-> **Skip the scroll. Know if a YouTube video suits *you* — before you watch it.**
+> **Skip the scroll. Know if a YouTube video suits _you_ — before you watch it.**
 
 TubeFit reads a video's comment section with Gemini AI and delivers a personalised suitability verdict based on your viewer persona (beginner, debugger, speed learner, etc.).
 
@@ -8,16 +8,16 @@ TubeFit reads a video's comment section with Gemini AI and delivers a personalis
 
 ## Features
 
-| Feature | Description |
-|---|---|
-| **AI Suitability Verdict** | FIT / CAUTION / NO FIT with confidence score |
-| **Viewer Personas** | 5 presets + free-form custom persona |
-| **Sentiment Breakdown** | Positive / Neutral / Negative % across all comments |
-| **Top Liked Comments** | The community's most-upvoted reactions at a glance |
-| **Keywords** | Recurring themes extracted by Gemini |
-| **Community Tips** | Practical advice pulled from the comment section |
-| **Compatibility Notes** | Version / platform concerns flagged automatically |
-| **Export** | Download a full Markdown report or copy raw JSON |
+| Feature                    | Description                                         |
+| -------------------------- | --------------------------------------------------- |
+| **AI Suitability Verdict** | FIT / CAUTION / NO FIT with confidence score        |
+| **Viewer Personas**        | 5 presets + free-form custom persona                |
+| **Sentiment Breakdown**    | Positive / Neutral / Negative % across all comments |
+| **Top Liked Comments**     | The community's most-upvoted reactions at a glance  |
+| **Keywords**               | Recurring themes extracted by Gemini                |
+| **Community Tips**         | Practical advice pulled from the comment section    |
+| **Compatibility Notes**    | Version / platform concerns flagged automatically   |
+| **Export**                 | Download a full Markdown report or copy raw JSON    |
 
 ---
 
@@ -82,6 +82,7 @@ GEMINI_API_KEY  = "your_google_gemini_api_key"
 ```
 
 > **Get your keys:**
+>
 > - [YouTube Data API v3](https://console.cloud.google.com/) — enable the API, create credentials
 > - [Gemini API](https://aistudio.google.com/app/apikey)
 
@@ -111,14 +112,14 @@ GEMINI_API_KEY  = "your_google_gemini_api_key"
 
 ## Personas
 
-| Persona | Best for |
-|---|---|
-| The Debugger | Developers troubleshooting broken or outdated code |
-| The Newbie | Complete beginners checking if a tutorial is beginner-friendly |
-| The Legacy User | People on older hardware / older software versions |
-| The Speed Learner | Experienced folks who want concise, no-fluff content |
-| The Professional | Evaluating accuracy and production-readiness |
-| Custom | Any situation — describe yourself in free text |
+| Persona           | Best for                                                       |
+| ----------------- | -------------------------------------------------------------- |
+| The Debugger      | Developers troubleshooting broken or outdated code             |
+| The Newbie        | Complete beginners checking if a tutorial is beginner-friendly |
+| The Legacy User   | People on older hardware / older software versions             |
+| The Speed Learner | Experienced folks who want concise, no-fluff content           |
+| The Professional  | Evaluating accuracy and production-readiness                   |
+| Custom            | Any situation — describe yourself in free text                 |
 
 ---
 
