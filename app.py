@@ -11,6 +11,12 @@ from src.styles import STYLES
 from src.utils import extract_video_id, format_number, generate_report_markdown
 from src.youtube_api import get_video_metadata, get_youtube_comments
 from src.gemini_ai import analyze_comments_with_gemini
+from src.cache import (
+    get_cached_comments,  set_cached_comments,
+    get_cached_metadata,  set_cached_metadata,
+    get_cached_analysis,  set_cached_analysis,
+    cache_stats,
+)
 
 st.set_page_config(
     page_title="TubeFit – Comment Intelligence",
@@ -47,6 +53,16 @@ with st.sidebar:
     show_sentiment    = st.toggle("Sentiment Breakdown", value=True)
     show_keywords     = st.toggle("Keywords",            value=True)
     show_tips         = st.toggle("Community Tips",      value=True)
+    st.markdown("<hr style='border-color:#222;margin:1rem 0;'>", unsafe_allow_html=True)
+
+    st.markdown("### Cache")
+    stats = cache_stats()
+    st.markdown(f"""
+    <div style="font-size:0.78rem;line-height:2;color:#666;">
+        <span style="color:#22c55e;">&#9679;</span> Cached videos &nbsp;&nbsp;: <strong style="color:#bbb;">{stats['comments']}</strong><br>
+        <span style="color:#3b82f6;">&#9679;</span> Cached analyses : <strong style="color:#bbb;">{stats['analysis']}</strong><br>
+        <span style="color:#444;">&#9679;</span> Total entries &nbsp;&nbsp;: <strong style="color:#bbb;">{stats['total']}</strong>
+    </div>""", unsafe_allow_html=True)
     st.markdown("<hr style='border-color:#222;margin:1rem 0;'>", unsafe_allow_html=True)
 
     st.markdown("""
@@ -133,23 +149,56 @@ if analyse_clicked:
             bar = st.progress(0, text="Starting analysis…")
             time.sleep(0.2)
 
-            bar.progress(15, text="Fetching video information…")
-            video_meta = get_video_metadata(video_id)
+            # ── Layer 1: metadata (cached) ──────────────────────────
+            bar.progress(10, text="Fetching video information…")
+            video_meta = get_cached_metadata(video_id)
+            if video_meta is None:
+                video_meta = get_video_metadata(video_id)
+                if video_meta:
+                    set_cached_metadata(video_id, video_meta)
 
-            bar.progress(35, text=f"Collecting {max_comments} comments…")
-            comments = get_youtube_comments(video_id, max_results=max_comments, sort_by=sort_order)
+            # ── Layer 1: comments (cached) ──────────────────────────
+            bar.progress(30, text=f"Collecting {max_comments} comments…")
+            comments = get_cached_comments(video_id)
+            comments_from_cache = comments is not None
+            if comments is None:
+                comments = get_youtube_comments(video_id, max_results=max_comments, sort_by=sort_order)
+                if comments:
+                    set_cached_comments(video_id, comments)
 
             if not comments:
                 st.warning("⚠️ No comments found or comments are disabled for this video.")
                 bar.empty()
             else:
+                # ── Layer 2: analysis (cached per video + persona) ──
                 bar.progress(62, text=f"Gemini is analysing {len(comments)} comments for your persona…")
-                result = analyze_comments_with_gemini(comments, persona_description)
+                result = get_cached_analysis(video_id, persona_description)
+                analysis_from_cache = result is not None
+                if result is None:
+                    result = analyze_comments_with_gemini(comments, persona_description)
+                    if result:
+                        set_cached_analysis(video_id, persona_description, result)
+
                 bar.progress(100, text="Analysis complete!")
                 time.sleep(0.4)
                 bar.empty()
 
                 if result:
+                    # ── Cache-hit banner ──────────────────────────────
+                    cached_parts = []
+                    if comments_from_cache:  cached_parts.append("comments")
+                    if analysis_from_cache:  cached_parts.append("AI analysis")
+                    if cached_parts:
+                        st.markdown(f"""
+                        <div style="background:rgba(34,197,94,0.06);border:1px solid rgba(34,197,94,0.2);
+                            border-left:3px solid #22c55e;border-radius:8px;padding:0.65rem 1.1rem;
+                            margin-bottom:1rem;display:flex;align-items:center;gap:0.6rem;">
+                            <span style="font-size:0.9rem;">⚡</span>
+                            <span style="color:#86efac;font-size:0.82rem;font-weight:500;">
+                                Served from cache: <strong>{", ".join(cached_parts)}</strong>
+                                &nbsp;—&nbsp; 0 API quota used for these.
+                            </span>
+                        </div>""", unsafe_allow_html=True)
                     # Video metadata card
                     if video_meta:
                         thumb = (
@@ -373,13 +422,17 @@ if analyse_clicked:
                         with st.expander("View Gemini response"):
                             st.json(result)
                         analysed_at = datetime.now().strftime("%b %d, %Y at %H:%M")
+                        cache_comments_label = "✓ hit" if comments_from_cache else "✗ miss"
+                        cache_analysis_label = "✓ hit" if analysis_from_cache else "✗ miss"
                         st.markdown(f"""
                         <div class="glass-card" style="margin-top:1rem;">
                             <p style="color:#555;font-size:0.82rem;margin:0;line-height:1.9;">
-                                Video ID &nbsp;·&nbsp; <span style="color:#888;">{video_id}</span><br>
-                                Analysed &nbsp;·&nbsp; <span style="color:#888;">{analysed_at}</span><br>
-                                Comments &nbsp;·&nbsp; <span style="color:#888;">{len(comments)}</span><br>
-                                Persona  &nbsp;·&nbsp; <span style="color:#888;">{selected_persona}</span>
+                                Video ID &nbsp;&nbsp;&nbsp;·&nbsp; <span style="color:#888;">{video_id}</span><br>
+                                Analysed &nbsp;&nbsp;&nbsp;·&nbsp; <span style="color:#888;">{analysed_at}</span><br>
+                                Comments &nbsp;&nbsp;&nbsp;·&nbsp; <span style="color:#888;">{len(comments)}</span><br>
+                                Persona &nbsp;&nbsp;&nbsp;&nbsp;·&nbsp; <span style="color:#888;">{selected_persona}</span><br>
+                                Cache (comments) &nbsp;·&nbsp; <span style="color:#888;">{cache_comments_label}</span><br>
+                                Cache (analysis) &nbsp;·&nbsp; <span style="color:#888;">{cache_analysis_label}</span>
                             </p>
                         </div>""", unsafe_allow_html=True)
 

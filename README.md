@@ -28,6 +28,34 @@ TubeFit reads a video's comment section with Gemini AI and delivers a personalis
 - **Frontend** — [Streamlit](https://streamlit.io) (wide layout, animated CSS)
 - **Comment data** — [YouTube Data API v3](https://developers.google.com/youtube/v3)
 - **AI analysis** — [Google Gemini 2.5 Flash](https://ai.google.dev)
+- **Caching** — In-memory two-layer TTL cache (`src/cache.py`)
+
+---
+
+## Caching Architecture
+
+TubeFit uses a two-layer in-memory cache to minimise API quota consumption.
+Both YouTube and Gemini calls are skipped whenever a warm cache entry exists.
+
+```
+┌───────────────────────────────────────────────────────────────┐
+│  Layer 1 — Comment + Metadata Cache  (TTL = 3 h)       │
+│  Key   : video_id                                      │
+│  Saves : 1 YouTube Data API call per video             │
+├───────────────────────────────────────────────────────────────┤
+│  Layer 2 — Analysis Cache             (TTL = 6 h)       │
+│  Key   : video_id + SHA-256(persona_text)              │
+│  Saves : 1 Gemini API call per (video, persona) pair   │
+└───────────────────────────────────────────────────────────────┘
+```
+
+| Scenario | YouTube API calls | Gemini API calls |
+|---|---|---|
+| First request for a video | 1 | 1 |
+| Same video, same persona (within TTL) | 0 | 0 |
+| Same video, different persona (within TTL) | 0 | 1 |
+
+Cache hit/miss status is visible live in the sidebar and in the Export tab.
 
 ---
 
@@ -35,7 +63,7 @@ TubeFit reads a video's comment section with Gemini AI and delivers a personalis
 
 ```
 YTCommentsAnalyser/
-├── app.py                      # Streamlit entry point (~200 lines)
+├── app.py                      # Streamlit entry point
 ├── requirements.txt
 ├── .gitignore
 ├── .streamlit/
@@ -44,6 +72,7 @@ YTCommentsAnalyser/
 │   └── secrets.toml.example    # Safe template committed to repo
 └── src/
     ├── __init__.py
+    ├── cache.py                # Two-layer TTL cache (Layer 1: comments, Layer 2: AI analysis)
     ├── config.py               # API key loading (st.secrets → env fallback)
     ├── styles.py               # All CSS injected via st.markdown
     ├── utils.py                # extract_video_id, format_number, report generator
@@ -58,8 +87,8 @@ YTCommentsAnalyser/
 ### 1. Clone
 
 ```bash
-git clone https://github.com/<your-username>/YTCommentsAnalyser.git
-cd YTCommentsAnalyser
+git clone https://github.com/hariPrasathK-Dev/TubeFit.git
+cd TubeFit
 ```
 
 ### 2. Install dependencies
