@@ -2,6 +2,8 @@
 
 > **Skip the scroll. Know if a YouTube video suits _you_ — before you watch it.**
 
+[![Live App](https://img.shields.io/badge/Live%20App-tubefit.streamlit.app-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://tubefit.streamlit.app/)
+
 TubeFit reads a video's comment section with Gemini AI and delivers a personalised suitability verdict based on your viewer persona (beginner, debugger, speed learner, etc.).
 
 ---
@@ -94,19 +96,13 @@ streamlit run app.py
 
 ---
 
-## Deploy to Streamlit Cloud
+## Live App
 
-1. Push this repository to GitHub (make sure `.streamlit/secrets.toml` is in `.gitignore` ✅)
-2. Go to [share.streamlit.io](https://share.streamlit.io) → **New app**
-3. Select your repo, branch `main`, entry point `app.py`
-4. Open **Advanced settings → Secrets** and paste:
+**TubeFit is deployed and live:**
 
-```toml
-YOUTUBE_API_KEY = "your_youtube_data_api_v3_key"
-GEMINI_API_KEY  = "your_google_gemini_api_key"
-```
+> ### [https://tubefit.streamlit.app/](https://tubefit.streamlit.app/)
 
-5. Click **Deploy** — that's it.
+No setup needed — just open the link and paste a YouTube URL.
 
 ---
 
